@@ -1,0 +1,180 @@
+global:
+  zkReplicaCount: 3
+
+sql-service:
+  enabled: false
+  nodeSelector:
+    {}
+  replicaCount: 0
+  service:
+    thrift:
+      type: "ClusterIP"
+
+solr:
+  nodeSelector:
+    {}
+  image:
+    tag: 8.4.1
+  updateStrategy:
+    type: "RollingUpdate"
+  javaMem: "-Xmx2g -Dfusion_node_type=system"
+  solrGcTune: "-XX:+ExitOnOutOfMemoryError -XX:+UseG1GC -XX:-OmitStackTraceInFastThrow -XX:+UseStringDeduplication -XX:+PerfDisableSharedMem -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=150 -XX:+UseLargePages -XX:+AlwaysPreTouch"
+  volumeClaimTemplates:
+    storageSize: "50Gi"
+  replicaCount: 1
+  resources: {}
+  exporter:
+    enabled: true
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9983"
+      prometheus.io/path: "/metrics"
+    nodeSelector:
+      {}
+
+zookeeper:
+  nodeSelector:
+    {}
+  replicaCount: 3
+  persistence:
+    size: 15Gi
+  resources: {}
+  env:
+    ZK_HEAP_SIZE: 1G
+    ZK_PURGE_INTERVAL: 1
+
+ml-model-service:
+  image:
+    imagePullPolicy: "IfNotPresent"
+  nodeSelector:
+    {}
+  modelRepoImpl: fusion
+  fs:
+    enabled: true
+
+fusion-admin:
+  nodeSelector:
+    {}
+  readinessProbe:
+    initialDelaySeconds: 100
+
+fusion-indexing:
+  nodeSelector:
+    {}
+  readinessProbe:
+    initialDelaySeconds: 100
+  pod:
+    annotations:
+      prometheus.io/port: "8765"
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+
+query-pipeline:
+  nodeSelector:
+    {}
+  javaToolOptions: "-Xmx3g -Djava.util.concurrent.ForkJoinPool.common.parallelism=1 -Dserver.jetty.max-threads=500 -Dhttp.maxConnections=1000 -XX:+ExitOnOutOfMemoryError"
+  livenessProbe:
+    failureThreshold: 10
+    httpGet:
+      path: /actuator/health
+      port: jetty
+      scheme: HTTP
+    initialDelaySeconds: 45
+    periodSeconds: 15
+    successThreshold: 1
+    timeoutSeconds: 3
+  readinessProbe:
+    failureThreshold: 10
+    httpGet:
+      path: /actuator/health
+      port: jetty
+      scheme: HTTP
+    initialDelaySeconds: 45
+    periodSeconds: 15
+    successThreshold: 1
+    timeoutSeconds: 3
+  pod:
+    annotations:
+      prometheus.io/port: "8787"
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+
+admin-ui:
+  nodeSelector:
+    {}
+
+api-gateway:
+  service:
+    externalTrafficPolicy: "Local"
+  nodeSelector:
+    {}
+  javaToolOptions: "-Xms2g -Xmx2g -Djwt.token.user-cache-size=100 -Dhttp.maxConnections=1000 -XX:+ExitOnOutOfMemoryError"
+  pod:
+    annotations:
+      prometheus.io/port: "6764"
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/actuator/prometheus"
+
+auth-ui:
+  nodeSelector:
+    {}
+
+classic-rest-service:
+  nodeSelector:
+    {}
+
+devops-ui:
+  nodeSelector:
+    {}
+
+fusion-resources:
+  nodeSelector:
+    {}
+
+insights:
+  nodeSelector:
+    {}
+
+job-launcher:
+  nodeSelector:
+    {}
+
+job-rest-server:
+  nodeSelector:
+    {}
+
+logstash:
+  nodeSelector:
+    {}
+
+rest-service:
+  nodeSelector:
+    {}
+
+rpc-service:
+  nodeSelector:
+    {}
+
+rules-ui:
+  nodeSelector:
+    {}
+
+webapps:
+  livenessProbe:
+    initialDelaySeconds: 60
+  javaToolOptions: "-Xmx1g -Dspring.zipkin.enabled=false -Dspring.sleuth.enabled=false"
+  nodeSelector:
+    {}
+
+fusion-jupyter:
+  enabled: false
+
+pulsar:
+  broker:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
+  bookkeeper:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8000"
